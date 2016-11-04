@@ -1,0 +1,59 @@
+import requests
+from bs4 import BeautifulSoup
+import PyRSS2Gen
+import datetime
+
+url = 'http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl/'
+urldefualt = 'http://www.cqhrss.gov.cn/'
+headers = {
+    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding':'gzip, deflate, sdch',
+    'Accept-Language':'zh-CN,zh;q=0.8',
+    'Connection':'keep-alive',
+    'Cache-Control':'no-cache',
+    'Pragma':'no-cache',
+    'Host':'www.cqhrss.gov.cn',
+    'Referer':'http://www.cqhrss.gov.cn/',
+    'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+}
+
+# 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
+def get_data(tag):
+    href = tag.find('a').attrs["href"]
+    date = tag.find('span').string
+    title = tag.find('pp').string
+    link = 'http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl' + href
+    return link,date,title
+
+# 模拟浏览器创建网站session,防止网站重定向
+session = requests.session()
+session.get(urldefualt,headers=headers)
+ans_html = session.get(url,headers=headers).text
+
+# 利用BS4找到文章列表
+soup = BeautifulSoup(ans_html,'html.parser')
+li_list = soup.select('.article_list  li')
+# print(li_list)
+
+# for li_data in li_list:
+#     print(li_data)
+
+
+rss = PyRSS2Gen.RSS2(
+    title = '重庆市人力资源社会保障网招录信息',
+    link = 'http://www.cqhrss.gov.cn/',
+    description = '为了省时间也为了学习Python',
+    lastBuildDate = datetime.datetime.now(),
+    items= [])
+for li_data in li_list:
+    link,date,title = get_data(li_data)
+    item = PyRSS2Gen.RSSItem(
+        title = title,
+        link = link,
+        description = '',
+        guid = link,
+        pubDate = date
+    )
+    rss.items.append(item)
+
+rss.write_xml(open("pyrss2gen.xml", "w"))
