@@ -57,3 +57,7 @@ cn.qzs.qq.com##.sidebar.lite_hide
 !隐藏网易云音乐网页版的下载客户端显示
 music.163.com##.lst
 music.163.com###index-banner
+
+!Inoreader广告
+www.inoreader.com###sinner_container
+www.inoreader.com##.ajaxed.bluelink
