@@ -61,3 +61,6 @@ music.163.com###index-banner
 !Inoreader广告
 www.inoreader.com###sinner_container
 www.inoreader.com##.ajaxed.bluelink
+
+!隐藏百度搜索广告
+www.baidu.com##.leftBlock
