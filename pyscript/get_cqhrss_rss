@@ -1,10 +1,28 @@
-import requests
-from bs4 import BeautifulSoup
 import PyRSS2Gen
 import datetime
+import requests
+import codecs
+from bs4 import BeautifulSoup
 
-url = 'http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl/'
-urldefualt = 'http://www.cqhrss.gov.cn/'
+# 设置配置文件避免不同网站大幅度修改源代码
+config = {
+  "url":"http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl/",
+  "urldefualt":'http://www.cqhrss.gov.cn',
+  "rssTitle":"重庆人社人员招录",
+  "cssSel":".article_list  li",
+  "linkTag":"a",
+  "titleTag":"pp",
+  "dateTag":"span",
+  "xmlpath":r"D:\cqhrss.xml",
+}
+
+# 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
+def get_data(tag):
+    link = config["urldefualt"] + tag.find(config["linkTag"]).attrs["href"]
+    date = tag.find(config["dateTag"]).string
+    title = tag.find(config["titleTag"]).string
+    return link,date,title
+
 headers = {
     'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding':'gzip, deflate, sdch',
@@ -12,37 +30,24 @@ headers = {
     'Connection':'keep-alive',
     'Cache-Control':'no-cache',
     'Pragma':'no-cache',
-    'Host':'www.cqhrss.gov.cn',
-    'Referer':'http://www.cqhrss.gov.cn/',
     'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
 }
 
-# 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
-def get_data(tag):
-    href = tag.find('a').attrs["href"]
-    date = tag.find('span').string
-    title = tag.find('pp').string
-    link = 'http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl' + href
-    return link,date,title
-
 # 模拟浏览器创建网站session,防止网站重定向
 session = requests.session()
-session.get(urldefualt,headers=headers)
-ans_html = session.get(url,headers=headers).text
+session.get(config["urldefualt"],headers=headers)
+ans_html = session.get(config["url"],headers=headers).text
 
 # 利用BS4找到文章列表
-soup = BeautifulSoup(ans_html,'html.parser')
-li_list = soup.select('.article_list  li')
-# print(li_list)
-
-# for li_data in li_list:
-#     print(li_data)
+soup = BeautifulSoup(ans_html,'lxml')
+li_list = soup.select(config["cssSel"])
 
 
+# 生成RSS对象
 rss = PyRSS2Gen.RSS2(
-    title = '重庆市人力资源社会保障网招录信息',
-    link = 'http://www.cqhrss.gov.cn/',
-    description = '为了省时间也为了学习Python',
+    title = config["rssTitle"],
+    link = config["urldefualt"],
+    description = config["rssTitle"],
     lastBuildDate = datetime.datetime.now(),
     items= [])
 for li_data in li_list:
@@ -50,10 +55,13 @@ for li_data in li_list:
     item = PyRSS2Gen.RSSItem(
         title = title,
         link = link,
-        description = '',
+        description = title,
         guid = link,
         pubDate = date
     )
     rss.items.append(item)
 
-rss.write_xml(open("pyrss2gen.xml", "w"))
+#发布RSS文件
+file=codecs.open(config["xmlpath"],'w','utf-8')
+file.writelines(rss.to_xml(encoding='utf-8'))
+file.close()
