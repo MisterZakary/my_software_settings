@@ -2,36 +2,54 @@ import PyRSS2Gen
 import datetime
 import requests
 import codecs
+import re
 from bs4 import BeautifulSoup
+# ***********************************************************************
+# 脚本使用方法
+# 1.配置config属性
+# 2.由于水平很低,耦合度很高,也没有普遍性.需要小幅度修改各个函数的代码.
+# 3.某些网站需要在header中设置host及Referer属性服务器才会响应,自行添加相关代码
+# ***********************************************************************
 
 # 设置配置文件避免不同网站大幅度修改源代码
 config = {
-  "url":"http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl/",
-  "urldefualt":'http://www.cqhrss.gov.cn',
-  "rssTitle":"重庆人社人员招录",
-  "cssSel":".article_list  li",
-  "articleSel":".article",
-  "linkTag":"a",
-  "titleTag":"pp",
-  "dateTag":"span",
-  "xmlpath":r"D:\cqhrss.xml",
+  "url":"http://www.cqhrss.gov.cn/zwxx/ywfl/rsrc/klzl/",  #需要获取列表的网页
+  "urldefualt":'http://www.cqhrss.gov.cn',  #某些网站需要通过首页进入子网页,该配置表示网站首页
+  "rssTitle":"重庆人社人员招录",  #RSS的标题
+  "cssSel":".article_list  li", #在列表网页获取列表的CSS选择器
+  "articleSel":".article", #文章列表获取文章内容的CSS选择器
+  "linkTag":"a", #在列表中选择网页链接的标签名
+  "titleTag":"pp", #在列表中选择网页的标题的标签名
+  "dateTag":"span", #在列表中选择网页的发布日期的标签名
+  "xmlpath":r"D:\cqhrss.xml", # 生成的XML文件的路径及名字
 }
 
 # 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
+# 函数输入为文章List的每一个TAG对象,输出为网页链接,发布日期,标题的字符串
 def get_data(tag):
   link = config["urldefualt"] + tag.find(config["linkTag"]).attrs["href"]
   date = tag.find(config["dateTag"]).string
   title = tag.find(config["titleTag"]).string
   return link,date,title
 
-#进入文章网页获取网页内容返回适合RSS Description的数据
+# 清洗数据,将获取的文章列表中的Style全部去除
+# 函数的输入为需要清洗的html字符串,输出为清洗后的Html字符串
+def clean(html):
+  style = r' style="[^"]*"'
+  html = re.sub(style , "" , html)
+  return html
+
+# 进入文章网页获取网页内容返回适合RSS Description的数据
+# 函数的输入为每篇文章的URL链接,输出为全文RSS的Description字符串
 def get_article(articleUrl):
   articleHtml = session.get(articleUrl,headers=headers).text
   articleSoup = BeautifulSoup(articleHtml,'html.parser',from_encoding="utf-8")
-  article = articleSoup.select(config["articleSel"])
-  descriptionData = "<![CDATA[" + str(article[0]) + "]]>"
+  article = str( articleSoup.select(config["articleSel"])[0] )
+  article = clean(article)
+  descriptionData = "<![CDATA[" + article + "]]>"
   return descriptionData
 
+# 定义浏览器headers
 headers = {
   'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Encoding':'gzip, deflate, sdch',
@@ -48,7 +66,7 @@ session.get(config["urldefualt"],headers=headers)
 ans_html = session.get(config["url"],headers=headers).text
 
 # 利用BS4找到文章列表
-soup = BeautifulSoup(ans_html,'lxml')
+soup = BeautifulSoup(ans_html,'html.parser')
 li_list = soup.select(config["cssSel"])
 
 
@@ -72,6 +90,6 @@ for li_data in li_list:
     rss.items.append(item)
 
 #发布RSS文件
-file=codecs.open(config["xmlpath"],'w','utf-8')
+file=codecs.open(config["xmlpath"],'w+','utf-8')
 file.writelines(rss.to_xml(encoding='utf-8'))
 file.close()
