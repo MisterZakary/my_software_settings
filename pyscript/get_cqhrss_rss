@@ -10,6 +10,7 @@ config = {
   "urldefualt":'http://www.cqhrss.gov.cn',
   "rssTitle":"重庆人社人员招录",
   "cssSel":".article_list  li",
+  "articleSel":".article",
   "linkTag":"a",
   "titleTag":"pp",
   "dateTag":"span",
@@ -18,19 +19,27 @@ config = {
 
 # 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
 def get_data(tag):
-    link = config["urldefualt"] + tag.find(config["linkTag"]).attrs["href"]
-    date = tag.find(config["dateTag"]).string
-    title = tag.find(config["titleTag"]).string
-    return link,date,title
+  link = config["urldefualt"] + tag.find(config["linkTag"]).attrs["href"]
+  date = tag.find(config["dateTag"]).string
+  title = tag.find(config["titleTag"]).string
+  return link,date,title
+
+#进入文章网页获取网页内容返回适合RSS Description的数据
+def get_article(articleUrl):
+  articleHtml = session.get(articleUrl,headers=headers).text
+  articleSoup = BeautifulSoup(articleHtml,'html.parser',from_encoding="utf-8")
+  article = articleSoup.select(config["articleSel"])
+  descriptionData = "<![CDATA[" + str(article[0]) + "]]>"
+  return descriptionData
 
 headers = {
-    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Encoding':'gzip, deflate, sdch',
-    'Accept-Language':'zh-CN,zh;q=0.8',
-    'Connection':'keep-alive',
-    'Cache-Control':'no-cache',
-    'Pragma':'no-cache',
-    'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+  'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+  'Accept-Encoding':'gzip, deflate, sdch',
+  'Accept-Language':'zh-CN,zh;q=0.8',
+  'Connection':'keep-alive',
+  'Cache-Control':'no-cache',
+  'Pragma':'no-cache',
+  'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
 }
 
 # 模拟浏览器创建网站session,防止网站重定向
@@ -52,10 +61,11 @@ rss = PyRSS2Gen.RSS2(
     items= [])
 for li_data in li_list:
     link,date,title = get_data(li_data)
+    descriptionCache = get_article(link)
     item = PyRSS2Gen.RSSItem(
         title = title,
         link = link,
-        description = title,
+        description = descriptionCache,
         guid = link,
         pubDate = date
     )
