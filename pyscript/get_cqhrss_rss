@@ -21,7 +21,7 @@ config = {
   "linkTag":"a", #在列表中选择网页链接的标签名
   "titleTag":"pp", #在列表中选择网页的标题的标签名
   "dateTag":"span", #在列表中选择网页的发布日期的标签名
-  "xmlpath":r"D:\cqhrss.xml", # 生成的XML文件的路径及名字
+  "xmlpath":r"/home/myRss/cqhrsszl.xml", # 生成的XML文件的路径及名字
 }
 
 # 获取Beautifulsoup tag对象的网址链接,发布时间,标题等信息,为制作RSS提供数据
@@ -43,7 +43,7 @@ def clean(html):
 # 函数的输入为每篇文章的URL链接,输出为全文RSS的Description字符串
 def get_article(articleUrl):
   articleHtml = session.get(articleUrl,headers=headers).text
-  articleSoup = BeautifulSoup(articleHtml,'html.parser',from_encoding="utf-8")
+  articleSoup = BeautifulSoup(articleHtml,'html.parser')
   article = str( articleSoup.select(config["articleSel"])[0] )
   article = clean(article)
   descriptionData = "<![CDATA[" + article + "]]>"
@@ -90,6 +90,6 @@ for li_data in li_list:
     rss.items.append(item)
 
 #发布RSS文件
-file=codecs.open(config["xmlpath"],'w+','utf-8')
+file=codecs.open(config["xmlpath"],'w','utf-8')
 file.writelines(rss.to_xml(encoding='utf-8'))
 file.close()
