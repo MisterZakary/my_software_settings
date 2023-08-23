@@ -2,3 +2,12 @@
 127.0.0.1 hub5btmain.sandai.net
 127.0.0.1 hub5emu.sandai.net
 127.0.0.1 upgrade.xl9.xunlei.com
+
+# 去除CorelDRAW 系列软件检测
+127.0.0.1 apps.corel.com
+127.0.0.1 mc.corel.com
+127.0.0.1 origin-mc.corel.com
+127.0.0.1 iws.corel.com
+
+# 去除SyncBackPro系列软件检测
+127.0.0.1 2brightsparks.com
