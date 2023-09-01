@@ -11,3 +11,15 @@
 
 # 去除SyncBackPro系列软件检测
 127.0.0.1 2brightsparks.com
+
+# FinaShell 授权屏蔽
+127.0.0.1 www.youtusoft.com
+127.0.0.1 youtusoft.com
+127.0.0.1 hostbuf.com
+127.0.0.1 www.hostbuf.com
+127.0.0.1 dkys.org
+127.0.0.1 tcpspeed.com
+127.0.0.1 www.wn1998.com
+127.0.0.1 wn1998.com
+127.0.0.1 pwlt.wn1998.com
+127.0.0.1 backup.www.hostbuf.com
